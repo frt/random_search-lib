@@ -1,37 +1,36 @@
 #include "random_search.h"
-
-/*
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "../include/bfo.h"
-#include "../include/report.h"
-#include "../include/user_defined.h"
+#define RANDOM_SEARCH_ERR_MALLOC 1
 
-const char* params_file_name = "bfo.in";
-*/
+typedef struct random_search {
+	int population_size;
+	int number_of_dimensions;
+	double *min_x;
+	double *max_x;
+} random_search_t;
+
+/* this struct is the "global namespace" of random_search algorithm */
+random_search_t random_search;
+
+void random_search_malloc_double_array(double **double_array, int size, char *err_msg)
+{
+	*double_array = (double*)malloc(size * sizeof(double));
+	if (*double_array == NULL) {
+		printf("[random_search:malloc_error]: %s\n", err_msg);
+		exit(RANDOM_SEARCH_ERR_MALLOC);
+	}
+}
 
 void random_search_init()
 {
-	/*
-	initialize_user_defined();
+	int pop_size = 50;
+	int dims = 50
 
-	report_initial();
-	report_before_initialize_params();
-	bfo_initialize_params();
-	report_after_initialize_params();
-	report_before_initialize_population();
-	ret = bfo_initialize_population();
-	if (ret != SUCCESS) {
-		printf("ERRO: Não foi possível inicializar a população.\n");
-		return ret;
-	}
-	report_after_initialize_population();
-	report_before_initialize_runtime();
-	bfo_initialize_runtime();
-	report_after_initialize_runtime();
-	bfo_dispersal_counter_zero();
-	*/
+	random_search.population_size = pop_size;
+	random_search.number_of_dimensions = dims;
+	random_search_malloc_double_array(&(random_search.min_x), dims, "Não foi possível alocar random_search.min_x.");
+	random_search_malloc_double_array(&(random_search.max_x), dims, "Não foi possível alocar random_search.max_x.");
 }
 
 void random_search_run_iterations(int iterations)
