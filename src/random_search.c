@@ -1,36 +1,88 @@
 #include "random_search.h"
 #include <stdlib.h>
+#include <mtwist.h>
 
 #define RANDOM_SEARCH_ERR_MALLOC 1
+
+typedef struct random_search_individual {
+	double *x;
+} random_search_individual_t;
 
 typedef struct random_search {
 	int population_size;
 	int number_of_dimensions;
 	double *min_x;
 	double *max_x;
+	random_search_individual_t *individuals;
 } random_search_t;
 
 /* this struct is the "global namespace" of random_search algorithm */
 random_search_t random_search;
 
-void random_search_malloc_double_array(double **double_array, int size, char *err_msg)
+/**
+ * Random search allocation and error handling.
+ *
+ * \param array Array that will be allocated.
+ * \param size Size of the array.
+ * \param type_size Size of the type of the elements of the array.
+ * \param err_msg Error message.
+ */
+void *random_search_malloc(int size, size_t type_size, char *err_msg)
 {
-	*double_array = (double*)malloc(size * sizeof(double));
-	if (*double_array == NULL) {
+	void *array;
+	array = malloc(size * type_size);
+	if (*array == NULL) {
 		printf("[random_search:malloc_error]: %s\n", err_msg);
 		exit(RANDOM_SEARCH_ERR_MALLOC);
+	}
+	return array;
+}
+
+void random_search_params_init()
+{
+	int i;
+
+	random_search.population_size = 50;
+	random_search.number_of_dimensions = 50;
+	random_search.min_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
+			"Não foi possível alocar random_search.min_x.");
+	random_search.max_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
+			"Não foi possível alocar random_search.max_x.");
+	for (i = 0; i < random_search.number_of_dimensions; ++i) {
+		random_search.min_x[i] = -12;
+		random_search.max_x[i] = 12;
+	}
+}
+
+void random_search_population_create()
+{
+	random_search.individuals = (individual_t *)random_search_malloc(random_search.population_size, sizeof(individual_t), 
+			"Não foi possível alocar random_search.individuals.");
+	
+	for (i = 0; i < random_search.population_size; ++i) {
+		random_search.individuals[i].x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
+				"Não foi possível alocar random_search.individuals[%d].x.", i);
+	}
+}
+
+void random_search_population_init()
+{
+	int i, j;
+
+	for (i = 0; i < random_search.population_size; ++i) {
+		for (j = 0; j < random_search.number_of_dimensions; ++j) {
+			range = random_search.max_x[j] - random_search.min_x[j];
+			random_search.individuals[i].x[j] = random_search.min_x[j] + range * mt_ldrand();
+		}
 	}
 }
 
 void random_search_init()
 {
-	int pop_size = 50;
-	int dims = 50
-
-	random_search.population_size = pop_size;
-	random_search.number_of_dimensions = dims;
-	random_search_malloc_double_array(&(random_search.min_x), dims, "Não foi possível alocar random_search.min_x.");
-	random_search_malloc_double_array(&(random_search.max_x), dims, "Não foi possível alocar random_search.max_x.");
+	mt_seed();
+	random_search_params_init();
+	random_search_population_create();
+	random_search_population_init();
 }
 
 void random_search_run_iterations(int iterations)
