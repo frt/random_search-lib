@@ -31,7 +31,7 @@ void *random_search_malloc(int size, size_t type_size, char *err_msg)
 {
 	void *array;
 	array = malloc(size * type_size);
-	if (*array == NULL) {
+	if (array == NULL) {
 		printf("[random_search:malloc_error]: %s\n", err_msg);
 		exit(RANDOM_SEARCH_ERR_MALLOC);
 	}
@@ -56,18 +56,22 @@ void random_search_params_init()
 
 void random_search_population_create()
 {
-	random_search.individuals = (individual_t *)random_search_malloc(random_search.population_size, sizeof(individual_t), 
+	int i;
+	char err_msg[256];
+
+	random_search.individuals = (random_search_individual_t *)random_search_malloc(random_search.population_size, sizeof(random_search_individual_t), 
 			"Não foi possível alocar random_search.individuals.");
 	
 	for (i = 0; i < random_search.population_size; ++i) {
-		random_search.individuals[i].x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
-				"Não foi possível alocar random_search.individuals[%d].x.", i);
+		sprintf(err_msg, "Não foi possível alocar random_search.individuals[%d].x.", i);
+		random_search.individuals[i].x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), err_msg);
 	}
 }
 
 void random_search_population_init()
 {
 	int i, j;
+	double range;
 
 	for (i = 0; i < random_search.population_size; ++i) {
 		for (j = 0; j < random_search.number_of_dimensions; ++j) {
