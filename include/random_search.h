@@ -2,6 +2,8 @@
 
 #include <parallel_evolution.h>
 
+extern double (*random_search_fitness_func)(double*);           /* função de fitness (minimização) */
+
 /**
  * Creates the initial population and other initialization things.
  */

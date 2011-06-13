@@ -6,6 +6,7 @@
 
 typedef struct random_search_individual {
 	double *x;
+	double fitness;
 } random_search_individual_t;
 
 typedef struct random_search {
@@ -68,16 +69,32 @@ void random_search_population_create()
 	}
 }
 
-void random_search_population_init()
+double random_search_random_value_for_dimension(int dimension)
 {
-	int i, j;
 	double range;
 
+	range = random_search.max_x[dimension] - random_search.min_x[dimension];
+	return random_search.min_x[dimension] + range * mt_ldrand();
+}
+
+/**
+ * Assign random values to x.
+ */
+void random_search_random_x(double *x)
+{
+	int i;
+
+	for (i = 0; i < random_search.number_of_dimensions; ++i)
+		x[i] = random_search_random_value_for_dimension(i);
+}
+
+void random_search_population_init()
+{
+	int i;
+
 	for (i = 0; i < random_search.population_size; ++i) {
-		for (j = 0; j < random_search.number_of_dimensions; ++j) {
-			range = random_search.max_x[j] - random_search.min_x[j];
-			random_search.individuals[i].x[j] = random_search.min_x[j] + range * mt_ldrand();
-		}
+		random_search_random_x(random_search.individuals[i].x);
+		random_search.individuals[i].fitness = random_search_fitness_func(random_search.individuals[i].x);
 	}
 }
 
@@ -91,14 +108,33 @@ void random_search_init()
 
 void random_search_run_iterations(int iterations)
 {
+	int i, j, k;
+	double *temp_x;
+	double temp_fitness;
+
+	temp_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
+
+	for (k = 0; k < iterations; ++k) {
+		for (i = 0; i < random_search.population_size; ++i) {
+			random_search_random_x(temp_x);
+			temp_fitness = random_search_fitness_func(temp_x);
+			if (temp_fitness < random_search.individuals[i].fitness) {
+				for (j = 0; j < random_search.number_of_dimensions; ++j)
+					random_search.individuals[i].x[j] = temp_x[j];
+				random_search.individuals[i].fitness = temp_fitness;
+			}
+		}
+	}
 }
 
 void random_search_insert_migrant(migrant_t *migrant)
 {
+	/* TODO */
 }
 
 void random_search_pick_migrant(migrant_t *my_migrant)
 {
+	/* TODO */
 	int i;
 
 	for (i = 0; i < my_migrant->var_size; ++i)
@@ -107,6 +143,7 @@ void random_search_pick_migrant(migrant_t *my_migrant)
 
 int random_search_ended()
 {
+	/* TODO */
 	static int it = 0;
 	int ret;
 
@@ -121,6 +158,7 @@ int random_search_ended()
 
 status_t random_search_get_population(population_t **population)
 {
+	/* TODO */
 	int i, j;
 	migrant_t *new_migrant;
 
