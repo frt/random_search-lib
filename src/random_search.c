@@ -108,6 +108,14 @@ void random_search_init()
 	random_search_population_init();
 }
 
+void random_search_solution_assign(double *solution1, double *solution2)
+{
+	int i;
+
+	for (i = 0; i < random_search.number_of_dimensions; ++i)
+		solution1[i] = solution2[i];
+}
+
 /**
  * Assign values and fitness of x to individual if it has a better fitness (minimization).
  */
@@ -118,8 +126,7 @@ void random_search_individual_assign_if_better(random_search_individual_t *indiv
 
 	temp_fitness = random_search_fitness_func(x);
 	if (temp_fitness < individual->fitness) {
-		for (i = 0; i < random_search.number_of_dimensions; ++i)
-			individual->x[i] = x[i];
+		random_search_solution_assign(individual->x, x);
 		individual->fitness = temp_fitness;
 	}
 }
@@ -153,14 +160,6 @@ void random_search_insert_migrant(migrant_t *migrant)
 	random_search_individual_assign_if_better(&(random_search.individuals[worst]), migrant->var);
 }
 
-void random_search_migrant_assign(migrant_t *migrant, double *x)
-{
-	int i;
-
-	for (i = 0; i < random_search.number_of_dimensions; ++i)
-		migrant->var[i] = x[i];
-}
-
 void random_search_pick_migrant(migrant_t *my_migrant)
 {
 	int i;
@@ -172,7 +171,7 @@ void random_search_pick_migrant(migrant_t *my_migrant)
 			best = i;
 	}
 
-	random_search_migrant_assign(my_migrant, random_search.individuals[best].x);
+	random_search_solution_assign(my_migrant->var, random_search.individuals[best].x);
 	my_migrant->var_size = random_search.number_of_dimensions; 
 }
 
@@ -205,7 +204,7 @@ status_t random_search_get_population(population_t **population)
 	for (i = 0; i < random_search.population_size; ++i) {
 		if (migrant_create(&new_migrant, random_search.number_of_dimensions) != SUCCESS)
 			return FAIL;
-		random_search_migrant_assign(new_migrant, random_search.individuals[i].x);
+		random_search_solution_assign(new_migrant->var, random_search.individuals[i].x);
 		population_set_individual(*population, new_migrant, i);
 	}
 
