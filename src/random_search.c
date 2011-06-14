@@ -129,7 +129,16 @@ void random_search_run_iterations(int iterations)
 
 void random_search_insert_migrant(migrant_t *migrant)
 {
-	/* TODO */
+	int i;
+	int worst = 0;
+
+	for (i = 1; i < random_search.population_size; ++i) {
+		if (random_search.individuals[i].fitness > random_search.individuals[worst])
+			worst = i;
+	}
+
+	if (random_search_fitness_func(migrant) < random_search.individuals[worst])
+random_search.individuals[worst] = 
 }
 
 void random_search_pick_migrant(migrant_t *my_migrant)
