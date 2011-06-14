@@ -15,6 +15,7 @@ typedef struct random_search {
 	double *min_x;
 	double *max_x;
 	random_search_individual_t *individuals;
+	double precision;
 } random_search_t;
 
 /* this struct is the "global namespace" of random_search algorithm */
@@ -53,6 +54,7 @@ void random_search_params_init()
 		random_search.min_x[i] = -12;
 		random_search.max_x[i] = 12;
 	}
+	random_search.precision = 1e-5;
 }
 
 void random_search_population_create()
@@ -151,6 +153,14 @@ void random_search_insert_migrant(migrant_t *migrant)
 	random_search_individual_assign_if_better(&(random_search.individuals[worst]), migrant->var);
 }
 
+void random_search_migrant_assign(migrant_t *migrant, double *x)
+{
+	int i;
+
+	for (i = 0; i < random_search.number_of_dimensions; ++i)
+		migrant->var[i] = x[i];
+}
+
 void random_search_pick_migrant(migrant_t *my_migrant)
 {
 	int i;
@@ -162,40 +172,40 @@ void random_search_pick_migrant(migrant_t *my_migrant)
 			best = i;
 	}
 
-	for (i = 0; i < random_search.number_of_dimensions; ++i)
-		my_migrant->var[i] = random_search.individuals[best].x[i];
+	random_search_migrant_assign(my_migrant, random_search.individuals[best].x);
 	my_migrant->var_size = random_search.number_of_dimensions; 
 }
 
 int random_search_ended()
 {
-	/* TODO */
-	static int it = 0;
-	int ret;
+	int i;
+	double best_fit;
+	double worst_fit;
 
-	if (it < 10)
-		ret = 0;
-	else
-		ret = 1;
+	best_fit = worst_fit = random_search.individuals[0].fitness;
 
-	++it;
-	return ret;
+	for (i = 1; i < random_search.population_size; ++i) {
+		if (random_search.individuals[i].fitness < best_fit)
+			best_fit = random_search.individuals[i].fitness;
+		if (random_search.individuals[i].fitness > worst_fit)
+			worst_fit = random_search.individuals[i].fitness;
+	}
+
+	return (worst_fit - best_fit < random_search.precision);
 }
 
 status_t random_search_get_population(population_t **population)
 {
-	/* TODO */
 	int i, j;
 	migrant_t *new_migrant;
 
-	if (population_create(population, 5) != SUCCESS)
+	if (population_create(population, random_search.population_size) != SUCCESS)
 		return FAIL;
 
-	for (i = 0; i < 5; ++i) {
-		if (migrant_create(&new_migrant, 50) != SUCCESS)
+	for (i = 0; i < random_search.population_size; ++i) {
+		if (migrant_create(&new_migrant, random_search.number_of_dimensions) != SUCCESS)
 			return FAIL;
-		for (j = 0; j < new_migrant->var_size; ++j)
-			new_migrant->var[j] = 42;
+		random_search_migrant_assign(new_migrant, random_search.individuals[i].x);
 		population_set_individual(*population, new_migrant, i);
 	}
 
