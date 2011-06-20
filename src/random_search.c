@@ -151,6 +151,10 @@ void random_search_insert_migrant(migrant_t *migrant)
 	int i;
 	int worst = 0;
 
+	if (migrant == NULL) {
+		parallel_evolution_log(SEVERITY_ERROR, MODULE_PARALLEL_EVOLUTION, "migrant == NULL.");
+	}
+
 	/* find the worst solution */
 	for (i = 1; i < random_search.population_size; ++i) {
 		if (random_search.individuals[i].fitness > random_search.individuals[worst].fitness)
