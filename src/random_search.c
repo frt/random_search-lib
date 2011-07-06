@@ -4,6 +4,9 @@
 
 #define RANDOM_SEARCH_ERR_MALLOC 1
 
+/* fitness function declaration */
+double (*random_search_fitness_func)(double*);
+
 typedef struct random_search_individual {
 	double *x;
 	double fitness;
