@@ -47,17 +47,17 @@ void random_search_params_init()
 {
 	int i;
 
-	random_search.population_size = 50;
-	random_search.number_of_dimensions = 50;
+	random_search.population_size = 50;	/* TODO turn into a configurable variable */
+	random_search.number_of_dimensions = 50;	/* TODO turn into a configurable variable */
 	random_search.min_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
 			"Não foi possível alocar random_search.min_x.");
 	random_search.max_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
 			"Não foi possível alocar random_search.max_x.");
 	for (i = 0; i < random_search.number_of_dimensions; ++i) {
-		random_search.min_x[i] = -12;
-		random_search.max_x[i] = 12;
+		random_search.min_x[i] = -12;	/* TODO turn into a configurable variable */
+		random_search.max_x[i] = 12;	/* TODO turn into a configurable variable */
 	}
-	random_search.precision = 1e-5;
+	random_search.precision = 1e-5;	/* TODO turn into a configurable variable */
 }
 
 void random_search_population_create()
