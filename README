@@ -1,0 +1,25 @@
+Random Search Optimization Library
+
+A Random Search [http://en.wikipedia.org/wiki/Random_optimization]
+implementation that uses a Uniform Distribution
+[http://en.wikipedia.org/wiki/Uniform_distribution] to sample for candidate
+solutions.
+
+This lib is intended for use with the parallel_evolution-lib
+[http://github.com/frt/parallel_evolution-lib]. An example application is
+parallel_evolution-app [http://github.com/frt/parallel_evolution-app].
+
+
+HOWTO INSTALL THIS LIB FROM THE SOURCES 
+
+ * Generate the './configure' script:
+
+	$ aclocal
+	$ automake --add-missing
+	$ autoconf
+
+ * Configure and install:
+
+	$ ./configure
+	$ make
+	# make install
