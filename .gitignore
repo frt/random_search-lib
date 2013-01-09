@@ -9,3 +9,7 @@ missing
 *.log
 *.results
 *.scan
+Makefile
+config.status
+.deps
+*.[oa]
