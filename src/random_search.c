@@ -3,6 +3,7 @@
 #include <mtwist.h>
 
 #define RANDOM_SEARCH_ERR_MALLOC 1
+#define MODULE_RANDOM_SEARCH "random_search"
 
 /* fitness function declaration */
 double (*random_search_fitness_func)(double*);
@@ -155,7 +156,7 @@ void random_search_insert_migrant(migrant_t *migrant)
 	int worst = 0;
 
 	if (migrant == NULL) {
-		parallel_evolution_log(SEVERITY_ERROR, MODULE_PARALLEL_EVOLUTION, "migrant == NULL.");
+		parallel_evolution_log(SEVERITY_ERROR, MODULE_RANDOM_SEARCH, "migrant == NULL.");
 	}
 
 	/* find the worst solution */
