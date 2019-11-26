@@ -1,5 +1,7 @@
 #include "random_search.h"
 #include <stdlib.h>
+
+#define MT_NO_INLINE
 #include <mtwist.h>
 
 #define RANDOM_SEARCH_ERR_MALLOC 1
