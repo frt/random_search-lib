@@ -2,6 +2,8 @@ AC_PREREQ([2.65])
 AC_INIT([random_search-lib], [0.1], [fr.teodoro@gmail.com])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_RANLIB
