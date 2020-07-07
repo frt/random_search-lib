@@ -13,3 +13,5 @@ Makefile
 config.status
 .deps
 *.[oa]
+ar-lib
+compile

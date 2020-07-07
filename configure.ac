@@ -9,7 +9,8 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdlib.h])
+AC_CHECK_HEADER([stdlib.h], [], [AC_MSG_ERROR(stdlib.h missing)])
+AC_CHECK_HEADER([mtwist.h], [], [AC_MSG_ERROR(mtwist.h missing (get it at https://github.com/frt/mtwist))])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
