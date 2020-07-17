@@ -1,5 +1,6 @@
 #include "random_search.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define MT_NO_INLINE
 #include <mtwist.h>
@@ -26,6 +27,7 @@ typedef struct random_search {
 
 /* this struct is the "global namespace" of random_search algorithm */
 random_search_t random_search;
+extern char log_msg[256];
 
 /**
  * Random search allocation and error handling.
@@ -125,7 +127,7 @@ void random_search_solution_assign(double *solution1, double *solution2)
 /**
  * Assign values and fitness of x to individual if it has a better fitness (minimization).
  */
-void random_search_individual_assign_if_better(random_search_individual_t *individual, double *x)
+bool random_search_individual_assign_if_better(random_search_individual_t *individual, double *x)
 {
 	double temp_fitness;
 	int i;
@@ -134,7 +136,9 @@ void random_search_individual_assign_if_better(random_search_individual_t *indiv
 	if (temp_fitness < individual->fitness) {
 		random_search_solution_assign(individual->x, x);
 		individual->fitness = temp_fitness;
-	}
+        return true;
+	} else
+        return false;
 }
 
 void random_search_run_iterations(int iterations)
@@ -143,11 +147,12 @@ void random_search_run_iterations(int iterations)
 	double *temp_x;
 
 	temp_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
+    random_search_random_x(temp_x);
 
 	for (k = 0; k < iterations; ++k) {
 		for (i = 0; i < random_search.population_size; ++i) {
-			random_search_random_x(temp_x);
-			random_search_individual_assign_if_better(&(random_search.individuals[i]), temp_x);
+			if (random_search_individual_assign_if_better(&(random_search.individuals[i]), temp_x))
+                break;
 		}
 	}
 }
@@ -200,6 +205,8 @@ int random_search_ended()
 			worst_fit = random_search.individuals[i].fitness;
 	}
 
+    sprintf(log_msg, "worst_fit: %f; best_fit: %f;", worst_fit, best_fit);
+    parallel_evolution_log(SEVERITY_DEBUG, MODULE_RANDOM_SEARCH, log_msg);
 	return (worst_fit - best_fit < random_search.precision);
 }
 
