@@ -51,3 +51,13 @@ int random_search_ended();
  * @return The status, indicating if the copy was successfull or not.
  */
 status_t random_search_get_population(population_t **population);
+
+/**
+ * Gets the algorithm statistics.
+ *
+ * Gets the algorithm statistics data structure, wich will be sent to the
+ * process with rank 0 for reports and totalizations.
+ *
+ * @return A pointer to the algorithm statistics data structure.
+ */
+algorithm_stats_t *random_search_get_stats();

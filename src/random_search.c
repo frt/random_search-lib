@@ -1,6 +1,7 @@
 #include "random_search.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define MT_NO_INLINE
 #include <mtwist.h>
@@ -23,6 +24,8 @@ typedef struct random_search {
 	double *max_x;
 	random_search_individual_t *individuals;
 	double precision;
+    int max_iterations;
+    algorithm_stats_t algorithm_stats;
 } random_search_t;
 
 /* this struct is the "global namespace" of random_search algorithm */
@@ -63,6 +66,8 @@ void random_search_params_init()
 		random_search.max_x[i] = 12;	/* TODO turn into a configurable variable */
 	}
 	random_search.precision = 1e-5;	/* TODO turn into a configurable variable */
+	random_search.max_iterations = 50000;	/* TODO turn into a configurable variable */
+    random_search.algorithm_stats.iterations = 0;
 }
 
 void random_search_population_create()
@@ -102,9 +107,20 @@ void random_search_population_init()
 {
 	int i;
 
-	for (i = 0; i < random_search.population_size; ++i) {
+    assert(random_search.population_size > 0);
+
+    // first iterarion optimized
+    random_search_random_x(random_search.individuals[0].x);
+    random_search.individuals[0].fitness = random_search_fitness_func(random_search.individuals[0].x);
+    random_search.algorithm_stats.avg_fitness = random_search.individuals[0].fitness;
+    random_search.algorithm_stats.best_fitness = random_search.individuals[0].fitness;
+
+	for (i = 1; i < random_search.population_size; ++i) {
 		random_search_random_x(random_search.individuals[i].x);
 		random_search.individuals[i].fitness = random_search_fitness_func(random_search.individuals[i].x);
+        random_search.algorithm_stats.avg_fitness = random_search.algorithm_stats.avg_fitness * i / (i + 1) + random_search.individuals[i].fitness / (i + 1);
+        if (random_search.individuals[i].fitness < random_search.algorithm_stats.best_fitness)
+            random_search.algorithm_stats.best_fitness = random_search.individuals[i].fitness;
 	}
 }
 
@@ -134,6 +150,12 @@ bool random_search_individual_assign_if_better(random_search_individual_t *indiv
 
 	temp_fitness = random_search_fitness_func(x);
 	if (temp_fitness < individual->fitness) {
+        // update stats                
+        random_search.algorithm_stats.avg_fitness -= individual->fitness / random_search.population_size;
+        random_search.algorithm_stats.avg_fitness += temp_fitness / random_search.population_size;
+        if (temp_fitness < random_search.algorithm_stats.best_fitness)
+            random_search.algorithm_stats.best_fitness = temp_fitness;
+
 		random_search_solution_assign(individual->x, x);
 		individual->fitness = temp_fitness;
         return true;
@@ -147,14 +169,16 @@ void random_search_run_iterations(int iterations)
 	double *temp_x;
 
 	temp_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
-    random_search_random_x(temp_x);
 
 	for (k = 0; k < iterations; ++k) {
+        random_search_random_x(temp_x);
 		for (i = 0; i < random_search.population_size; ++i) {
 			if (random_search_individual_assign_if_better(&(random_search.individuals[i]), temp_x))
                 break;
 		}
 	}
+
+    random_search.algorithm_stats.iterations += iterations;
 }
 
 void random_search_insert_migrant(migrant_t *migrant)
@@ -163,7 +187,7 @@ void random_search_insert_migrant(migrant_t *migrant)
 	int worst = 0;
 
 	if (migrant == NULL) {
-		parallel_evolution_log(SEVERITY_ERROR, MODULE_RANDOM_SEARCH, "migrant == NULL.");
+		parallel_evolution_log(LOG_PRIORITY_ERR, MODULE_RANDOM_SEARCH, "migrant == NULL.");
 	}
 
 	/* find the worst solution */
@@ -192,22 +216,14 @@ void random_search_pick_migrant(migrant_t *my_migrant)
 
 int random_search_ended()
 {
-	int i;
-	double best_fit;
-	double worst_fit;
+    sprintf(log_msg, "iterations: %d; avg_fit: %g; best_fit: %g;",
+            random_search.algorithm_stats.iterations,
+            random_search.algorithm_stats.avg_fitness,
+            random_search.algorithm_stats.best_fitness);
+    parallel_evolution_log(LOG_PRIORITY_INFO, MODULE_RANDOM_SEARCH, log_msg);
 
-	best_fit = worst_fit = random_search.individuals[0].fitness;
-
-	for (i = 1; i < random_search.population_size; ++i) {
-		if (random_search.individuals[i].fitness < best_fit)
-			best_fit = random_search.individuals[i].fitness;
-		if (random_search.individuals[i].fitness > worst_fit)
-			worst_fit = random_search.individuals[i].fitness;
-	}
-
-    sprintf(log_msg, "worst_fit: %f; best_fit: %f;", worst_fit, best_fit);
-    parallel_evolution_log(SEVERITY_DEBUG, MODULE_RANDOM_SEARCH, log_msg);
-	return (worst_fit - best_fit < random_search.precision);
+	return (random_search.algorithm_stats.avg_fitness - random_search.algorithm_stats.best_fitness < random_search.precision
+            || random_search.algorithm_stats.iterations >= random_search.max_iterations);
 }
 
 status_t random_search_get_population(population_t **population)
@@ -226,4 +242,9 @@ status_t random_search_get_population(population_t **population)
 	}
 
 	return SUCCESS;
+}
+
+algorithm_stats_t *random_search_get_stats()
+{
+    return &(random_search.algorithm_stats);
 }
