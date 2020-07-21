@@ -163,6 +163,19 @@ bool random_search_individual_assign_if_better(random_search_individual_t *indiv
         return false;
 }
 
+/* return the index of the worst solution */
+int worst_solution()
+{
+	int i, worst;
+
+	for (worst = 0, i = 1; i < random_search.population_size; ++i) {
+		if (random_search.individuals[i].fitness > random_search.individuals[worst].fitness)
+			worst = i;
+	}
+
+    return worst;
+}
+
 void random_search_run_iterations(int iterations)
 {
 	int i, k;
@@ -172,10 +185,7 @@ void random_search_run_iterations(int iterations)
 
 	for (k = 0; k < iterations; ++k) {
         random_search_random_x(temp_x);
-		for (i = 0; i < random_search.population_size; ++i) {
-			if (random_search_individual_assign_if_better(&(random_search.individuals[i]), temp_x))
-                break;
-		}
+        random_search_individual_assign_if_better(&(random_search.individuals[worst_solution()]), temp_x);
 	}
 
     random_search.algorithm_stats.iterations += iterations;
@@ -184,19 +194,12 @@ void random_search_run_iterations(int iterations)
 void random_search_insert_migrant(migrant_t *migrant)
 {
 	int i;
-	int worst = 0;
 
 	if (migrant == NULL) {
 		parallel_evolution_log(LOG_PRIORITY_ERR, MODULE_RANDOM_SEARCH, "migrant == NULL.");
 	}
 
-	/* find the worst solution */
-	for (i = 1; i < random_search.population_size; ++i) {
-		if (random_search.individuals[i].fitness > random_search.individuals[worst].fitness)
-			worst = i;
-	}
-
-	random_search_individual_assign_if_better(&(random_search.individuals[worst]), migrant->var);
+	random_search_individual_assign_if_better(&(random_search.individuals[worst_solution()]), migrant->var);
 }
 
 void random_search_pick_migrant(migrant_t *my_migrant)
