@@ -68,6 +68,7 @@ void random_search_params_init()
 	random_search.precision = 1e-5;	/* TODO turn into a configurable variable */
 	random_search.max_iterations = 50000;	/* TODO turn into a configurable variable */
     random_search.algorithm_stats.iterations = 0;
+    random_search.algorithm_stats.fitness_evals = 0;
 }
 
 void random_search_population_create()
@@ -122,6 +123,7 @@ void random_search_population_init()
         if (random_search.individuals[i].fitness < random_search.algorithm_stats.best_fitness)
             random_search.algorithm_stats.best_fitness = random_search.individuals[i].fitness;
 	}
+    random_search.algorithm_stats.fitness_evals += random_search.population_size;
 }
 
 void random_search_init()
@@ -149,6 +151,7 @@ bool random_search_individual_assign_if_better(random_search_individual_t *indiv
 	int i;
 
 	temp_fitness = random_search_fitness_func(x);
+    ++random_search.algorithm_stats.fitness_evals;
 	if (temp_fitness < individual->fitness) {
         // update stats                
         random_search.algorithm_stats.avg_fitness -= individual->fitness / random_search.population_size;
