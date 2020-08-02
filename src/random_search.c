@@ -187,8 +187,10 @@ void random_search_run_iterations(int iterations)
 	temp_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
 
 	for (k = 0; k < iterations; ++k) {
-        random_search_random_x(temp_x);
-        random_search_individual_assign_if_better(&(random_search.individuals[worst_solution()]), temp_x);
+        for (i = 0; i < random_search.population_size; ++i) {
+            random_search_random_x(temp_x);
+            random_search_individual_assign_if_better(random_search.individuals + i, temp_x);
+        }
 	}
 
     random_search.algorithm_stats.iterations += iterations;
