@@ -31,6 +31,7 @@ typedef struct random_search {
 /* this struct is the "global namespace" of random_search algorithm */
 random_search_t random_search;
 extern char log_msg[256];
+extern parallel_evolution_t parallel_evolution;
 
 /**
  * Random search allocation and error handling.
@@ -51,22 +52,81 @@ void *random_search_malloc(int size, size_t type_size, char *err_msg)
 	return array;
 }
 
-void random_search_params_init()
+int _config_lookup_int(const config_t *config, const char *path, void *value)
+{
+    return config_lookup_int(config, path, (int *)value);
+}
+
+int _config_lookup_int64(const config_t *config, const char *path, void *value)
+{
+    return config_lookup_int64(config, path, (long long *)value);
+}
+
+int _config_lookup_float(const config_t *config, const char *path, void *value)
+{
+    return config_lookup_float(config, path, (double *)value);
+}
+
+int _config_lookup_bool(const config_t *config, const char *path, void *value)
+{
+    return config_lookup_bool(config, path, (int *)value);
+}
+
+int _config_lookup_string(const config_t *config, const char *path, void *value)
+{
+    return config_lookup_string(config, path, (const char **)value);
+}
+
+void log_if_error(int (*config_lookup_fn)(const config_t *, const char *, void *), const config_t *config, const char *path, void *value)
+{
+    char *logmsg = NULL;
+    int n = 0;
+    size_t size = 0;
+
+    if (CONFIG_FALSE == config_lookup_fn(config, path, value)) {
+        // discover the size of memory needed.
+        n = snprintf(logmsg, size, "config error in file '%s' on line %d: %s",
+                config_error_file(config),
+                config_error_line(config),
+                config_error_text(config));
+        if (n >= 0) {
+            size = (size_t) n + 1;
+            logmsg = malloc(size);
+            if (logmsg != NULL) {
+                snprintf(logmsg, size, "config error in file '%s' on line %d: %s",
+                        config_error_file(config),
+                        config_error_line(config),
+                        config_error_text(config));
+                parallel_evolution_log(LOG_PRIORITY_ERR, MODULE_RANDOM_SEARCH, logmsg);
+                exit(config_error_type(config));
+            }
+        }
+
+        parallel_evolution_log(LOG_PRIORITY_ERR, MODULE_RANDOM_SEARCH, "config error");
+        exit(config_error_type(config));
+    }
+}
+
+void random_search_params_init(config_t *config)
 {
 	int i;
 
-	random_search.population_size = 50;	/* TODO turn into a configurable variable */
-	random_search.number_of_dimensions = 50;	/* TODO turn into a configurable variable */
+    log_if_error(&_config_lookup_int, config, "random_search.population_size", &random_search.population_size);
+
+	random_search.number_of_dimensions = parallel_evolution.number_of_dimensions;
+
 	random_search.min_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
 			"Não foi possível alocar random_search.min_x.");
 	random_search.max_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
 			"Não foi possível alocar random_search.max_x.");
 	for (i = 0; i < random_search.number_of_dimensions; ++i) {
-		random_search.min_x[i] = -12;	/* TODO turn into a configurable variable */
-		random_search.max_x[i] = 12;	/* TODO turn into a configurable variable */
+		random_search.min_x[i] = parallel_evolution.limits[i].min;
+		random_search.max_x[i] = parallel_evolution.limits[i].max;
 	}
-	random_search.precision = 1e-5;	/* TODO turn into a configurable variable */
-	random_search.max_iterations = 50000;	/* TODO turn into a configurable variable */
+
+    log_if_error(&_config_lookup_float, config, "random_search.precision", &random_search.precision);
+    log_if_error(&_config_lookup_int, config, "random_search.max_iterations", &random_search.max_iterations);
+
     random_search.algorithm_stats.iterations = 0;
     random_search.algorithm_stats.fitness_evals = 0;
 }
@@ -81,7 +141,7 @@ void random_search_population_create()
 	
 	for (i = 0; i < random_search.population_size; ++i) {
 		sprintf(err_msg, "Não foi possível alocar random_search.individuals[%d].x.", i);
-		random_search.individuals[i].x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), err_msg);
+		random_search.individuals[i].x = (double *)random_search_malloc(parallel_evolution.number_of_dimensions, sizeof(double), err_msg);
 	}
 }
 
@@ -100,7 +160,7 @@ void random_search_random_x(double *x)
 {
 	int i;
 
-	for (i = 0; i < random_search.number_of_dimensions; ++i)
+	for (i = 0; i < parallel_evolution.number_of_dimensions; ++i)
 		x[i] = random_search_random_value_for_dimension(i);
 }
 
@@ -126,10 +186,10 @@ void random_search_population_init()
     random_search.algorithm_stats.fitness_evals += random_search.population_size;
 }
 
-void random_search_init()
+void random_search_init(config_t *config)
 {
 	mt_seed();
-	random_search_params_init();
+	random_search_params_init(config);
 	random_search_population_create();
 	random_search_population_init();
 }
@@ -138,7 +198,7 @@ void random_search_solution_assign(double *solution1, double *solution2)
 {
 	int i;
 
-	for (i = 0; i < random_search.number_of_dimensions; ++i)
+	for (i = 0; i < parallel_evolution.number_of_dimensions; ++i)
 		solution1[i] = solution2[i];
 }
 
@@ -184,7 +244,7 @@ void random_search_run_iterations(int iterations)
 	int i, k;
 	double *temp_x;
 
-	temp_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
+	temp_x = (double *)random_search_malloc(parallel_evolution.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
 
 	for (k = 0; k < iterations; ++k) {
         for (i = 0; i < random_search.population_size; ++i) {
@@ -219,7 +279,7 @@ void random_search_pick_migrant(migrant_t *my_migrant)
 	}
 
 	random_search_solution_assign(my_migrant->var, random_search.individuals[best].x);
-	my_migrant->var_size = random_search.number_of_dimensions; 
+	my_migrant->var_size = parallel_evolution.number_of_dimensions; 
 }
 
 int random_search_ended()
@@ -243,7 +303,7 @@ status_t random_search_get_population(population_t **population)
 		return FAIL;
 
 	for (i = 0; i < random_search.population_size; ++i) {
-		if (migrant_create(&new_migrant, random_search.number_of_dimensions) != SUCCESS)
+		if (migrant_create(&new_migrant, parallel_evolution.number_of_dimensions) != SUCCESS)
 			return FAIL;
 		random_search_solution_assign(new_migrant->var, random_search.individuals[i].x);
 		population_set_individual(*population, new_migrant, i);

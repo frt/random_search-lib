@@ -1,13 +1,14 @@
 #pragma once
 
 #include <parallel_evolution.h>
+#include <libconfig.h>
 
 extern double (*random_search_fitness_func)(double*);           /* função de fitness (minimização) */
 
 /**
  * Creates the initial population and other initialization things.
  */
-void random_search_init();
+void random_search_init(config_t *config);
 
 /**
  * Runs a number of iterations.
