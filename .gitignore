@@ -11,6 +11,8 @@ missing
 *.scan
 Makefile
 config.status
+config.guess
+config.sub
 .deps
 *.[oa]
 ar-lib

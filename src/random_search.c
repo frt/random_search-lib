@@ -52,66 +52,11 @@ void *random_search_malloc(int size, size_t type_size, char *err_msg)
 	return array;
 }
 
-int _config_lookup_int(const config_t *config, const char *path, void *value)
-{
-    return config_lookup_int(config, path, (int *)value);
-}
-
-int _config_lookup_int64(const config_t *config, const char *path, void *value)
-{
-    return config_lookup_int64(config, path, (long long *)value);
-}
-
-int _config_lookup_float(const config_t *config, const char *path, void *value)
-{
-    return config_lookup_float(config, path, (double *)value);
-}
-
-int _config_lookup_bool(const config_t *config, const char *path, void *value)
-{
-    return config_lookup_bool(config, path, (int *)value);
-}
-
-int _config_lookup_string(const config_t *config, const char *path, void *value)
-{
-    return config_lookup_string(config, path, (const char **)value);
-}
-
-void log_if_error(int (*config_lookup_fn)(const config_t *, const char *, void *), const config_t *config, const char *path, void *value)
-{
-    char *logmsg = NULL;
-    int n = 0;
-    size_t size = 0;
-
-    if (CONFIG_FALSE == config_lookup_fn(config, path, value)) {
-        // discover the size of memory needed.
-        n = snprintf(logmsg, size, "config error in file '%s' on line %d: %s",
-                config_error_file(config),
-                config_error_line(config),
-                config_error_text(config));
-        if (n >= 0) {
-            size = (size_t) n + 1;
-            logmsg = malloc(size);
-            if (logmsg != NULL) {
-                snprintf(logmsg, size, "config error in file '%s' on line %d: %s",
-                        config_error_file(config),
-                        config_error_line(config),
-                        config_error_text(config));
-                parallel_evolution_log(LOG_PRIORITY_ERR, MODULE_RANDOM_SEARCH, logmsg);
-                exit(config_error_type(config));
-            }
-        }
-
-        parallel_evolution_log(LOG_PRIORITY_ERR, MODULE_RANDOM_SEARCH, "config error");
-        exit(config_error_type(config));
-    }
-}
-
 void random_search_params_init(config_t *config)
 {
 	int i;
 
-    log_if_error(&_config_lookup_int, config, "random_search.population_size", &random_search.population_size);
+    parallel_evolution_config_lookup_int(config, "random_search.population_size", &random_search.population_size);
 
 	random_search.number_of_dimensions = parallel_evolution.number_of_dimensions;
 
@@ -124,8 +69,8 @@ void random_search_params_init(config_t *config)
 		random_search.max_x[i] = parallel_evolution.limits[i].max;
 	}
 
-    log_if_error(&_config_lookup_float, config, "random_search.precision", &random_search.precision);
-    log_if_error(&_config_lookup_int, config, "random_search.max_iterations", &random_search.max_iterations);
+    parallel_evolution_config_lookup_float(config, "random_search.precision", &random_search.precision);
+    parallel_evolution_config_lookup_int(config, "random_search.max_iterations", &random_search.max_iterations);
 
     random_search.algorithm_stats.iterations = 0;
     random_search.algorithm_stats.fitness_evals = 0;

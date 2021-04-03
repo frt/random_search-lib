@@ -1,7 +1,6 @@
 #pragma once
 
 #include <parallel_evolution.h>
-#include <libconfig.h>
 
 extern double (*random_search_fitness_func)(double*);           /* função de fitness (minimização) */
 
