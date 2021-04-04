@@ -31,7 +31,6 @@ typedef struct random_search {
 /* this struct is the "global namespace" of random_search algorithm */
 random_search_t random_search;
 extern char log_msg[256];
-extern parallel_evolution_t parallel_evolution;
 
 /**
  * Random search allocation and error handling.
@@ -58,15 +57,15 @@ void random_search_params_init(config_t *config)
 
     parallel_evolution_config_lookup_int(config, "random_search.population_size", &random_search.population_size);
 
-	random_search.number_of_dimensions = parallel_evolution.number_of_dimensions;
+	random_search.number_of_dimensions = parallel_evolution_get_number_of_dimensions();
 
 	random_search.min_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
 			"Não foi possível alocar random_search.min_x.");
 	random_search.max_x = (double *)random_search_malloc(random_search.number_of_dimensions, sizeof(double), 
 			"Não foi possível alocar random_search.max_x.");
 	for (i = 0; i < random_search.number_of_dimensions; ++i) {
-		random_search.min_x[i] = parallel_evolution.limits[i].min;
-		random_search.max_x[i] = parallel_evolution.limits[i].max;
+		random_search.min_x[i] = parallel_evolution_get_limit_min(i);
+		random_search.max_x[i] = parallel_evolution_get_limit_max(i);
 	}
 
     parallel_evolution_config_lookup_float(config, "random_search.precision", &random_search.precision);
@@ -86,7 +85,7 @@ void random_search_population_create()
 	
 	for (i = 0; i < random_search.population_size; ++i) {
 		sprintf(err_msg, "Não foi possível alocar random_search.individuals[%d].x.", i);
-		random_search.individuals[i].x = (double *)random_search_malloc(parallel_evolution.number_of_dimensions, sizeof(double), err_msg);
+		random_search.individuals[i].x = (double *)random_search_malloc(parallel_evolution_get_number_of_dimensions(), sizeof(double), err_msg);
 	}
 }
 
@@ -105,7 +104,7 @@ void random_search_random_x(double *x)
 {
 	int i;
 
-	for (i = 0; i < parallel_evolution.number_of_dimensions; ++i)
+	for (i = 0; i < parallel_evolution_get_number_of_dimensions(); ++i)
 		x[i] = random_search_random_value_for_dimension(i);
 }
 
@@ -143,7 +142,7 @@ void random_search_solution_assign(double *solution1, double *solution2)
 {
 	int i;
 
-	for (i = 0; i < parallel_evolution.number_of_dimensions; ++i)
+	for (i = 0; i < parallel_evolution_get_number_of_dimensions(); ++i)
 		solution1[i] = solution2[i];
 }
 
@@ -189,7 +188,7 @@ void random_search_run_iterations(int iterations)
 	int i, k;
 	double *temp_x;
 
-	temp_x = (double *)random_search_malloc(parallel_evolution.number_of_dimensions, sizeof(double), "Não foi possível alocar temp_x.");
+	temp_x = (double *)random_search_malloc(parallel_evolution_get_number_of_dimensions(), sizeof(double), "Não foi possível alocar temp_x.");
 
 	for (k = 0; k < iterations; ++k) {
         for (i = 0; i < random_search.population_size; ++i) {
@@ -224,7 +223,7 @@ void random_search_pick_migrant(migrant_t *my_migrant)
 	}
 
 	random_search_solution_assign(my_migrant->var, random_search.individuals[best].x);
-	my_migrant->var_size = parallel_evolution.number_of_dimensions; 
+	my_migrant->var_size = parallel_evolution_get_number_of_dimensions(); 
 }
 
 int random_search_ended()
@@ -248,7 +247,7 @@ status_t random_search_get_population(population_t **population)
 		return FAIL;
 
 	for (i = 0; i < random_search.population_size; ++i) {
-		if (migrant_create(&new_migrant, parallel_evolution.number_of_dimensions) != SUCCESS)
+		if (migrant_create(&new_migrant, parallel_evolution_get_number_of_dimensions()) != SUCCESS)
 			return FAIL;
 		random_search_solution_assign(new_migrant->var, random_search.individuals[i].x);
 		population_set_individual(*population, new_migrant, i);
