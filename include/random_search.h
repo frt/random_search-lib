@@ -2,7 +2,7 @@
 
 #include <parallel_evolution.h>
 
-extern double (*random_search_fitness_func)(double*);           /* função de fitness (minimização) */
+extern double (*random_search_fitness_func)(const double *x, int n);           /* função de fitness (minimização) */
 
 /**
  * Creates the initial population and other initialization things.

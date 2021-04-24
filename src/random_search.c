@@ -10,7 +10,7 @@
 #define MODULE_RANDOM_SEARCH "random_search"
 
 /* fitness function declaration */
-double (*random_search_fitness_func)(double*);
+double (*random_search_fitness_func)(const double *x, int n);
 
 typedef struct random_search_individual {
 	double *x;
@@ -110,19 +110,21 @@ void random_search_random_x(double *x)
 
 void random_search_population_init()
 {
-	int i;
+	int i, n;
 
     assert(random_search.population_size > 0);
 
+    n = parallel_evolution_get_number_of_dimensions();
+
     // first iterarion optimized
     random_search_random_x(random_search.individuals[0].x);
-    random_search.individuals[0].fitness = random_search_fitness_func(random_search.individuals[0].x);
+    random_search.individuals[0].fitness = random_search_fitness_func(random_search.individuals[0].x, n);
     random_search.algorithm_stats.avg_fitness = random_search.individuals[0].fitness;
     random_search.algorithm_stats.best_fitness = random_search.individuals[0].fitness;
 
 	for (i = 1; i < random_search.population_size; ++i) {
 		random_search_random_x(random_search.individuals[i].x);
-		random_search.individuals[i].fitness = random_search_fitness_func(random_search.individuals[i].x);
+    random_search.individuals[i].fitness = random_search_fitness_func(random_search.individuals[i].x, n);
         random_search.algorithm_stats.avg_fitness = random_search.algorithm_stats.avg_fitness * i / (i + 1) + random_search.individuals[i].fitness / (i + 1);
         if (random_search.individuals[i].fitness < random_search.algorithm_stats.best_fitness)
             random_search.algorithm_stats.best_fitness = random_search.individuals[i].fitness;
@@ -152,9 +154,10 @@ void random_search_solution_assign(double *solution1, double *solution2)
 bool random_search_individual_assign_if_better(random_search_individual_t *individual, double *x)
 {
 	double temp_fitness;
-	int i;
+	int i, n;
 
-	temp_fitness = random_search_fitness_func(x);
+    n = parallel_evolution_get_number_of_dimensions();
+	temp_fitness = random_search_fitness_func(x, n);
     ++random_search.algorithm_stats.fitness_evals;
 	if (temp_fitness < individual->fitness) {
         // update stats                
